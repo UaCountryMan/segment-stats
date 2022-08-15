@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -46,5 +46,11 @@ public class SegmentStatisticService {
                 .collect(groupingBy(segmentStats -> segmentStats.getId().getSegmentId()));
 
         entitiesBySegmentId.forEach((key, value) -> profilesStatsRepo.saveAll(value));
+    }
+
+    public List<SegmentStatsProfilesEntity> findAllProfileStats() {
+        List<SegmentStatsProfilesEntity> result = new ArrayList<>();
+        profilesStatsRepo.findAll().forEach(result::add);
+        return result;
     }
 }
