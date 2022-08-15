@@ -23,7 +23,7 @@ public class SegmentStatisticService {
     @Autowired
     private final SegmentStatsProfilesRepository profilesStatsRepo;
 
-    public void updateProfilesStatisticsCleanUpEarliest(List<SegmentStatistics> segmentStatistics) {
+    public void updateProfilesStatistics(List<SegmentStatistics> segmentStatistics) {
         Set<SegmentStatsBaseEntity.Id> persistedIds = StreamSupport
                 .stream(profilesStatsRepo.findAll().spliterator(), false)
                 .map(SegmentStatsBaseEntity::getId)
@@ -46,6 +46,37 @@ public class SegmentStatisticService {
                 .collect(groupingBy(segmentStats -> segmentStats.getId().getSegmentId()));
 
         entitiesBySegmentId.forEach((key, value) -> profilesStatsRepo.saveAll(value));
+    }
+
+    public void updateProfilesStatisticsV2(List<SegmentStatistics> segmentStatistics) {
+        Map<Integer, List<SegmentStatistics>> statsBySegment = segmentStatistics
+                .stream()
+                .collect(groupingBy(SegmentStatistics::getSegmentId));
+
+        statsBySegment.forEach((segmentId, segmentStats) -> {
+            Set<SegmentStatsBaseEntity.Id> persistedIds = profilesStatsRepo
+                    .findAllById_SegmentId(segmentId)
+                    .stream()
+                    .map(SegmentStatsBaseEntity::getId)
+                    .collect(Collectors.toSet());
+
+            profilesStatsRepo.saveAll(segmentStats
+                    .stream()
+                    .map(stat -> {
+                        SegmentStatsBaseEntity.Id id = SegmentStatsBaseEntity.Id.build(stat.getSegmentId(), stat.getCountryCode());
+                        return (SegmentStatsProfilesEntity) new SegmentStatsProfilesEntity()
+                                .setProfilesStats(new SegmentStatsBaseEntity.ProfilesStats()
+                                        .setTotalProfiles(stat.getTotalProfiles())
+                                        .setTotalActiveProfiles(stat.getTotalActiveProfiles())
+                                        .setTotalSleepingProfiles(stat.getTotalSleepingProfiles())
+                                )
+                                .setId(id)
+                                .setNew(!persistedIds.contains(id))
+                                .setUpdateDate(stat.getUpdateDate() != null ? stat.getUpdateDate() : new Date());
+                    })
+                    .collect(Collectors.toList())
+            );
+        });
     }
 
     public List<SegmentStatsProfilesEntity> findAllProfileStats() {

@@ -39,7 +39,7 @@ public class SegmentStatsApplication {
 		Random rand = new Random();
 		Date now = new Date();
 		List<SegmentStatistics> segmentStatistics = IntStream
-				.range(1, 1_000)
+				.range(1, 100)
 				.boxed()
 				.flatMap(segmentId -> SUPPORTED_COUNTRIES
 						.stream()
@@ -53,7 +53,7 @@ public class SegmentStatsApplication {
 						)
 				)
 				.collect(Collectors.toList());
-		statisticService.updateProfilesStatisticsCleanUpEarliest(segmentStatistics);
+		statisticService.updateProfilesStatisticsV2(segmentStatistics);
 		return StandartResp.ok();
 	}
 
